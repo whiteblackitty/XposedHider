@@ -24,21 +24,22 @@ import java.util.Set;
  */
 public class ConfigUtils {
 
-    private static final String PATH = "rules";
+    //private static final String PATH = "rules";
     private static final String FILE = "list.json";
 
     public static void put(Context context, Set<String> apps) {
-        File path = context.getDir(PATH, Context.MODE_PRIVATE);
+        File path = new File("/data/data/" +  BuildConfig.APPLICATION_ID + "/app_rules");//context.getDir(PATH, Context.MODE_PRIVATE);
         File file = new File(path, FILE);
+
         if (!path.exists()) {
             path.mkdirs();
-            setFilePermissions(path, 0777, -1, -1);
+            setFilePermissions(path, 0777, -1, -1);//maybe have no permission to set permission, need to enforce in get() invoked by XposedHook class
         }
         try {
             FileOutputStream fos = new FileOutputStream(file);
             fos.write(new Gson().toJson(apps).getBytes());
             fos.close();
-            setFilePermissions(file, 0777, -1, -1);
+            setFilePermissions(file, 0777, -1, -1);//maybe have no permission to set permission, need to enforce in get() invoked by XposedHook class
         } catch (IOException e) {
             Log.i("Xposed", Log.getStackTraceString(e));
         }
@@ -46,9 +47,13 @@ public class ConfigUtils {
 
     public static Set<String> get() {
         StringBuilder s = new StringBuilder();
-        File path = new File("//data//data//" + BuildConfig.APPLICATION_ID + "//app_rules");
+        File path = new File("/data/data/" +  BuildConfig.APPLICATION_ID + "/app_rules");
         File file = new File(path, FILE);
-        setFilePermissions(file, 0777, -1, -1);
+
+        setFilePermissions(new File("/data/data/" +  BuildConfig.APPLICATION_ID), 0777, -1, -1);//[enforce]set permission for the app folder
+        setFilePermissions(path, 0777, -1, -1);//[enforce]set permission for the app_rules subfolder
+        setFilePermissions(file, 0777, -1, -1);//[enforce]set permission for the list.json file
+
         if (file.exists() && file.canRead()) {
             try {
                 InputStreamReader isr = new InputStreamReader(new FileInputStream(file));
@@ -56,6 +61,7 @@ public class ConfigUtils {
                 String line;
                 while ((line = bufReader.readLine()) != null) {
                     s.append("\n").append(line);
+
                 }
                 bufReader.close();
                 isr.close();
@@ -64,7 +70,7 @@ public class ConfigUtils {
             }
         } else {
             String t = file.exists() ? "Cannot read config file." : "Config file does not exists.";
-            Log.i("Xposed", "[W/XposedHider] " + t);
+            Log.i("Xposed", "[W/XposedHider_1.4] " + t + " path:" + file.getPath());
         }
         return new Gson().fromJson(s.toString(), new TypeToken<Set<String>>() {
         }.getType());

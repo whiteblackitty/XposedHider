@@ -11,10 +11,21 @@ android {
         versionCode getMyVersionCode()
         versionName getMyVersionName()
     }
+
+    signingConfigs {
+        release {
+            storeFile file("selflessman.keystore")
+            storePassword "selfless"
+            keyAlias "selflessman.keystore"
+            keyPassword "selfless"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
@@ -31,10 +42,18 @@ dependencies {
     compileOnly 'de.robv.android.xposed:api:82:sources'
 }
 
+allprojects {
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation" 
+        }
+    }
+}
+
 static def getMyVersionCode() {
     return Integer.parseInt(new SimpleDateFormat("yyMMdd").format(new Date()))
 }
 
 static def getMyVersionName() {
-    return "1.4.2." + "git describe --always".execute().getText().trim()
+    return "1.4.2.alpha4" + "git describe --always".execute().getText().trim()
 }
